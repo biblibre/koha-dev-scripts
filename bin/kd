@@ -438,11 +438,12 @@ cmd_down() {
 # Guard against ever being the session that first spawns the server from a
 # worktree: make sure a session rooted at $HOME exists (idempotent — a no-op
 # once the server already has one) before creating the real feature session.
-# $HOME is never removed, so once anchored, the server's own cwd stays valid
+# The cd matters: the server's own cwd is inherited from the launching
+# process, and -c only sets the session's start dir. $HOME is never removed, so once anchored, the server's own cwd stays valid
 # for its entire lifetime regardless of how many worktrees come and go.
 ensure_tmux_anchor() {
     tmux has-session -t _anchor 2>/dev/null \
-        || tmux new-session -d -s _anchor -c "$HOME" 2>/dev/null \
+        || (cd "$HOME" && tmux new-session -d -s _anchor 2>/dev/null) \
         || true
 }
 
