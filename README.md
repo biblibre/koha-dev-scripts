@@ -22,7 +22,7 @@ kd proxy [start|stop|status]
 | `kd tmux` | Attach or create a tmux dev session (container + dev windows) |
 | `kd shell` | Drop into the KTD container shell |
 | `kd logs` | Follow the KTD container logs |
-| `kd list` | Show all worktrees with KTD container name and status |
+| `kd list` | Searchable/sortable table of branches with KTD status. In fzf: `enter` opens an action menu (up, tmux, shell, logs, down, ...), `tab` multi-selects for bulk up/down, `ctrl-t`/`ctrl-u`/`ctrl-d` = tmux / up+tmux / down |
 | `kd proxy` | Manage the shared Traefik proxy |
 
 Versioned branch names (`NN.NN.TAG`, e.g. `24.11.etf`) are automatically mapped to a Docker-safe project name (`etf24`) and the correct `KOHA_IMAGE`.
