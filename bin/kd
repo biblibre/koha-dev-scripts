@@ -857,7 +857,7 @@ cmd_list() {
 
     if command -v fzf >/dev/null 2>&1 && [ -t 1 ]; then
         local reload="reload($KD_SELF _list_reload $datafile $sortfile)"
-        fzf --ansi --no-sort --multi --header-lines=1 \
+        fzf --ansi --exact --no-sort --multi --header-lines=1 \
             --header=$'enter:actions  tab:select  ctrl-t:tmux  ctrl-u:up+tmux  ctrl-d:down\nalt-t:title  alt-b:bz  alt-l:last-worked  alt-c:container  alt-r:branch (reset)' \
             --bind "alt-t:reload($KD_SELF _list_render $datafile title $sortfile)" \
             --bind "alt-b:reload($KD_SELF _list_render $datafile bz $sortfile)" \
