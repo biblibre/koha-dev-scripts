@@ -477,9 +477,15 @@ cmd_tmux() {
         _tmux_enter "$session"
     fi
 
+    # Panes inherit the tmux server's environment, not ours. The server is
+    # often started by the tmux-anchor unit with a bare environment, so
+    # anything the pane commands need (ktd requires KTD_HOME) must be passed
+    # explicitly or 'ktd --shell' dies on the spot and its split vanishes.
     local tmux_env=(
         -e "KTD_INSTANCE=$KTD_NAME"
         -e "SYNC_REPO=$worktree"
+        -e "KTD_HOME=$KTD_HOME"
+        -e "KOHA_DIR=$KOHA_DIR"
     )
 
     # Window 1: container visibility — logs left, shell right
