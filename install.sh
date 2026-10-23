@@ -2,7 +2,7 @@
 # install.sh — sync koha-dev-scripts into place on this machine. Re-runnable.
 #
 #   bin/*        → ~/.local/bin           (the kd wrapper, etc.)
-#   workspace/** → $KOHA_DIR              (Koha CLAUDE.md files + core/docs)
+#   workspace/** → $KOHA_DIR              (Koha AGENTS.md files + core/docs)
 #
 # Every target is a symlink back into this repo, so the repo is the single
 # source of truth: edit + commit + push here, then `git pull && ./install.sh`
@@ -85,6 +85,18 @@ for old in koha-feature-up koha-feature-down koha-feature-tmux; do
     if [ -L "$BIN_TARGET/$old" ]; then
         rm -f "$BIN_TARGET/$old"
         echo "removed legacy symlink $BIN_TARGET/$old"
+    fi
+done
+
+# Stale workspace symlinks from the CLAUDE.md → AGENTS.md rename — left behind
+# they would dangle once the repo file is gone. Only dangling symlinks that
+# point back into this repo are removed; a real user file is never touched.
+for old in CLAUDE.md core/CLAUDE.md; do
+    target="$KOHA_DIR/$old"
+    if [ -L "$target" ] && [ ! -e "$target" ] \
+        && [[ "$(readlink "$target")" == "$REPO/workspace/"* ]]; then
+        rm -f "$target"
+        echo "removed stale symlink $target"
     fi
 done
 

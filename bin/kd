@@ -54,6 +54,7 @@ Commands:
 Environment:
     KOHA_DIR    Root of the Koha workspace (default: ~/Projects/koha)
     KTD_HOME    KTD checkout (default: \$KOHA_DIR/tooling/koha-testing-docker)
+    KD_AGENT    Agent CLI for kd tmux's dev window (default: claude; e.g. opencode, vibe)
 
 EOF
 }
@@ -495,8 +496,8 @@ cmd_tmux() {
         "ktd --shell --name $KTD_NAME"
     tmux select-pane -t "$session:container.1"
 
-    # Window 2: dev — claude left, empty term right
-    tmux new-window -t "$session" -n "dev" -c "$worktree" "claude"
+    # Window 2: dev — agent left, empty term right
+    tmux new-window -t "$session" -n "dev" -c "$worktree" "${KD_AGENT:-claude}"
     tmux split-window -h -t "$session:dev" -c "$worktree"
     tmux select-pane -t "$session:dev.1"
 

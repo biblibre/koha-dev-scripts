@@ -30,7 +30,7 @@ Versioned branch names (`NN.NN.TAG`, e.g. `24.11.etf`) are automatically mapped 
 ## Workspace docs (`workspace/`)
 
 `workspace/` mirrors the shared, machine-agnostic Koha workspace config — the
-`CLAUDE.md` files and `core/docs/*.md` — under the same layout they occupy at
+`AGENTS.md` files and `core/docs/*.md` — under the same layout they occupy at
 `$KOHA_DIR`. `install.sh` symlinks each one into place, so the repo is the single
 source of truth: edit here, commit, push, and `git pull && ./install.sh` on the
 other machine picks it up. (Machine-specific `core/notes/` is deliberately not
@@ -38,9 +38,9 @@ synced.)
 
 ```
 workspace/
-├── CLAUDE.md            → $KOHA_DIR/CLAUDE.md
+├── AGENTS.md            → $KOHA_DIR/AGENTS.md
 └── core/
-    ├── CLAUDE.md        → $KOHA_DIR/core/CLAUDE.md
+    ├── AGENTS.md        → $KOHA_DIR/core/AGENTS.md
     └── docs/*.md        → $KOHA_DIR/core/docs/*.md
 ```
 
@@ -75,7 +75,7 @@ git pull
 - `ktd` / `ktd_proxy` — [koha-testing-docker](https://gitlab.com/koha-community/koha-testing-docker)
 - `docker`
 - `tmux`
-- `claude` (for the dev window in `kd tmux`)
+- An agent CLI for the dev window in `kd tmux` (default `claude`; set `KD_AGENT` to use another, e.g. `opencode`)
 
 ## Environment
 
@@ -83,3 +83,4 @@ git pull
 |----------|---------|---------|
 | `KOHA_DIR` | `~/Projects/koha` | Root of the Koha workspace |
 | `KTD_HOME` | `$KOHA_DIR/tooling/koha-testing-docker` | KTD checkout location |
+| `KD_AGENT` | `claude` | Agent CLI launched in `kd tmux`'s dev window |
