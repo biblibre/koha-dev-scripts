@@ -2,7 +2,7 @@
 # install.sh — sync koha-dev-scripts into place on this machine. Re-runnable.
 #
 #   bin/*        → ~/.local/bin           (the kd wrapper, etc.)
-#   workspace/** → $KOHA_DIR              (Koha CLAUDE.md files + core/docs)
+#   workspace/** → $KOHA_DIR              (Koha AGENTS.md/CLAUDE.md files + core/docs)
 #
 # Every target is a symlink back into this repo, so the repo is the single
 # source of truth: edit + commit + push here, then `git pull && ./install.sh`

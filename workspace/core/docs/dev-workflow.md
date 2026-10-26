@@ -11,15 +11,16 @@ kd up   <feature> [--bz] [--tmux]  # create worktree from main + boot KTD instan
                                    #   --bz applies the bug's patches before booting
                                    #   --tmux opens the dev tmux session once KTD is ready
 kd wt   <feature> [--bz]           # create worktree only (no KTD)
-kd tmux <feature>                  # attach/create the dev tmux session (claude | shell | logs)
+kd tmux <feature>                  # attach/create the dev tmux session (agent | shell | logs)
 kd down <feature> [--rm]           # tear down KTD instance (--rm also removes the worktree)
 kd list                            # worktrees + KTD container status
 kd branches                        # branches, worktrees, containers, upstream tracking
 ```
 
-`kd tmux` launches a Claude Code session in the "dev" window with cwd set to the
-worktree — start your per-bug Claude sessions there rather than launching `claude`
-by hand, so `KTD_INSTANCE`/`SYNC_REPO` are exported and git targets the right branch.
+`kd tmux` launches your agent CLI (`KD_AGENT`, default `claude`) in the "dev"
+window with cwd set to the worktree — start per-bug agent sessions there rather
+than launching the agent by hand, so `KTD_INSTANCE`/`SYNC_REPO` are exported and
+git targets the right branch.
 
 Under the hood, `kd` sets `KTD_INSTANCE=<feature>` so the `ktd --name "${KTD_INSTANCE:-kohadev}"` form everywhere in these docs picks the right container.
 
@@ -43,7 +44,7 @@ For single-instance setups (no parallel work), omit `--name` or use `KTD_INSTANC
 ## Submission process
 
 1. Create feature branch from main via `kd up <feature>` (or `kd up bug_XXXXX --bz --tmux`)
-2. Run tests inside KTD (see `@docs/testing.md`)
+2. Run tests inside KTD (see `docs/testing.md`)
 3. Build assets: `ktd --name "${KTD_INSTANCE:-kohadev}" --shell --run 'yarn build'`
 4. Submit patches to [bugs.koha-community.org](https://bugs.koha-community.org) (not GitHub PRs)
 5. Follow the [SubmittingAPatch wiki](https://wiki.koha-community.org/wiki/SubmittingAPatch) guidelines
