@@ -8,7 +8,8 @@ Personal Koha development workflow scripts. A single `kd` command wraps git work
 kd up   <name> [--plugin PATH] [--plugins] [--search-engine ENGINE]
                [--selenium] [--smtp] [--sso] [--persistent-db]
                [--bz] [--tmux] [--track UPSTREAM]
-kd wt   <name> [--bz] [--track UPSTREAM]
+               [--non-interactive] [--follow-status STATUS]
+kd wt   <name> [--bz] [--track UPSTREAM] [--non-interactive] [--follow-status STATUS]
 kd down <name> [--keep] [--rm=full]
 kd tmux <name>
 kd shell <name> [--root] [--run 'cmd']
@@ -19,7 +20,7 @@ kd proxy [start|stop|status]
 
 | Command | Purpose |
 |---------|---------|
-| `kd up` | Create worktree (if needed) and start a KTD instance. `--bz` applies the bug's patches (`git bz apply`, bug number taken from a `bug_NNNNN` name) before booting; `--tmux` waits for KTD to be ready then opens the tmux session; `--track UPSTREAM` creates a new branch tracking an upstream ref (e.g. `origin/master`) instead of branching from `main`. The remaining flags are passed through to `ktd` |
+| `kd up` | Create worktree (if needed) and start a KTD instance. `--bz` applies the bug's patches (`git bz apply`, bug number taken from a `bug_NNNNN` name) before booting; `--tmux` waits for KTD to be ready then opens the tmux session; `--track UPSTREAM` creates a new branch tracking an upstream ref (e.g. `origin/master`) instead of branching from `main`. With `--bz`, `--non-interactive` and `--follow-status STATUS` are passed to `git bz apply` for unattended use (the exit status is git bz's own; 3 means a dependency isn't in a followable state) — `koha-reviewer` drives `kd wt`/`kd up` this way. The remaining flags are passed through to `ktd` |
 | `kd wt` | Create the worktree only (no KTD). Takes `--bz` and `--track` like `kd up` |
 | `kd down` | Stop the KTD instance **and remove its worktree** (the branch is kept). `--keep` leaves the worktree in place; `--rm=full` also deletes the branch. (`--rm` is accepted for compatibility; it is now the default) |
 | `kd tmux` | Attach or create the `koha-<name>` tmux session: a `container` window (docker logs + KTD shell) and a `dev` window running your agent CLI in the worktree. See [tmux sessions](#tmux-sessions) |

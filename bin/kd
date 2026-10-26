@@ -21,7 +21,8 @@ kd — Koha dev workflow wrapper
 Usage:
     kd up  <name> [--plugin PATH] [--plugins] [--search-engine ENGINE]
                   [--selenium] [--smtp] [--sso] [--persistent-db] [--bz] [--tmux] [--track UPSTREAM]
-    kd wt  <name> [--bz] [--track UPSTREAM]
+                  [--non-interactive] [--follow-status STATUS]
+    kd wt  <name> [--bz] [--track UPSTREAM] [--non-interactive] [--follow-status STATUS]
     kd down <name> [--keep] [--rm=full]
     kd tmux <name>
     kd shell <name> [--root] [--run 'cmd']
@@ -33,7 +34,9 @@ Usage:
 Commands:
     up        Create worktree (if needed) and start a KTD instance; --bz applies the
               bug's patches before booting; --tmux waits for KTD then opens tmux;
-              --track UPSTREAM creates branch tracking an upstream ref (e.g. origin/master)
+              --track UPSTREAM creates branch tracking an upstream ref (e.g. origin/master);
+              with --bz, --non-interactive / --follow-status STATUS are passed to
+              git bz apply (for unattended use; exit status is git bz's own)
     wt        Create worktree only (no KTD); --bz applies the bug's patches;
               --track UPSTREAM creates branch tracking an upstream ref (e.g. origin/master)
     down      Stop a KTD instance and remove its worktree (branch is kept;
@@ -103,6 +106,26 @@ fix_worktree_bare() {
     git -C "$worktree" config --worktree core.bare false
 }
 
+# Applies a bug's patches to the worktree via git bz. Exits with git bz's own
+# status (e.g. 3 = a dependency is not in a followable state) so headless
+# callers can tell failure modes apart.
+#   $1 name  $2 worktree  $3 non_interactive (0|1)  $4 follow_status (may be empty)
+apply_bz_patches() {
+    local name="$1" worktree="$2" non_interactive="$3" follow_status="$4"
+    local bz_num rc=0
+    bz_num="$(_bz_from_name "$name")"
+    if [ -z "$bz_num" ]; then
+        echo "error: cannot extract bug number from '$name' (expected bug_NNNNN or qa_NNNNN form)" >&2
+        exit 1
+    fi
+    local args=(apply)
+    [ "$non_interactive" -eq 1 ] && args+=(--non-interactive)
+    [ -n "$follow_status" ] && args+=(--follow-status "$follow_status")
+    echo "applying bz $bz_num..."
+    (cd "$worktree" && git bz "${args[@]}" "$bz_num") || rc=$?
+    [ "$rc" -eq 0 ] || exit "$rc"
+}
+
 # Claude Code keys its per-project state (history, persistent memory) by the
 # worktree's absolute path with / . _ collapsed to -. Point each worktree's
 # memory dir at the shared root store so accumulated Koha knowledge (MEMORY.md
@@ -140,6 +163,8 @@ cmd_up() {
     local ktd_extra=()
     local plugin_path=""
     local apply_bz=0
+    local bz_non_interactive=0
+    local bz_follow_status=""
     local open_tmux=0
     local track_upstream=""
 
@@ -154,6 +179,8 @@ cmd_up() {
             --search-engine)
                 ktd_extra+=(--search-engine "$2"); shift 2 ;;
             --bz)   apply_bz=1; shift ;;
+            --non-interactive) bz_non_interactive=1; shift ;;
+            --follow-status)   bz_follow_status="$2"; shift 2 ;;
             --tmux) open_tmux=1; shift ;;
             --track)
                 track_upstream="$2"; shift 2 ;;
@@ -190,14 +217,7 @@ cmd_up() {
     fix_worktree_bare "$worktree"
 
     if [ "$apply_bz" -eq 1 ]; then
-        local bz_num
-        bz_num="$(_bz_from_name "$name")"
-        if [ -z "$bz_num" ]; then
-            echo "error: cannot extract bug number from '$name' (expected bug_NNNNN form)" >&2
-            exit 1
-        fi
-        echo "applying bz $bz_num..."
-        (cd "$worktree" && git bz apply "$bz_num")
+        apply_bz_patches "$name" "$worktree" "$bz_non_interactive" "$bz_follow_status"
     fi
 
     if ! docker ps --format '{{.Names}}' | grep -q '^proxy-proxy-1$'; then
@@ -339,11 +359,15 @@ cmd_wt() {
     local worktree="$KOHA_DIR/core/worktrees/$name"
     local bare="$KOHA_DIR/core/koha.git"
     local apply_bz=0
+    local bz_non_interactive=0
+    local bz_follow_status=""
     local track_upstream=""
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --bz) apply_bz=1; shift ;;
+            --non-interactive) bz_non_interactive=1; shift ;;
+            --follow-status)   bz_follow_status="$2"; shift 2 ;;
             --track)
                 track_upstream="$2"; shift 2 ;;
             *) echo "unknown option: $1" >&2; exit 1 ;;
@@ -377,14 +401,7 @@ cmd_wt() {
     fix_worktree_bare "$worktree"
 
     if [ "$apply_bz" -eq 1 ]; then
-        local bz_num
-        bz_num="$(_bz_from_name "$name")"
-        if [ -z "$bz_num" ]; then
-            echo "error: cannot extract bug number from '$name' (expected bug_NNNNN form)" >&2
-            exit 1
-        fi
-        echo "applying bz $bz_num..."
-        (cd "$worktree" && git bz apply "$bz_num")
+        apply_bz_patches "$name" "$worktree" "$bz_non_interactive" "$bz_follow_status"
     fi
 
     echo ""
