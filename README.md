@@ -30,7 +30,7 @@ Versioned branch names (`NN.NN.TAG`, e.g. `24.11.etf`) are automatically mapped 
 ## Workspace docs (`workspace/`)
 
 `workspace/` mirrors the shared, machine-agnostic Koha workspace config — the
-`AGENTS.md` files and `core/docs/*.md` — under the same layout they occupy at
+`AGENTS.md` / `CLAUDE.md` files and `core/docs/*.md` — under the same layout they occupy at
 `$KOHA_DIR`. `install.sh` symlinks each one into place, so the repo is the single
 source of truth: edit here, commit, push, and `git pull && ./install.sh` on the
 other machine picks it up. (Machine-specific `core/notes/` is deliberately not
@@ -38,9 +38,11 @@ synced.)
 
 ```
 workspace/
-├── AGENTS.md            → $KOHA_DIR/AGENTS.md
+├── AGENTS.md            → $KOHA_DIR/AGENTS.md   (shared, any agent)
+├── CLAUDE.md            → $KOHA_DIR/CLAUDE.md   (imports AGENTS.md)
 └── core/
     ├── AGENTS.md        → $KOHA_DIR/core/AGENTS.md
+    ├── CLAUDE.md        → $KOHA_DIR/core/CLAUDE.md (imports AGENTS.md + docs/*.md)
     └── docs/*.md        → $KOHA_DIR/core/docs/*.md
 ```
 
