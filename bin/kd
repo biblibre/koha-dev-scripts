@@ -471,6 +471,14 @@ cmd_tmux() {
         exit 1
     fi
 
+    # KD_AGENT is run through the shell (so it may carry arguments); check its
+    # binary exists up front rather than letting the dev window vanish on a typo.
+    local agent="${KD_AGENT:-claude}"
+    if ! command -v "${agent%% *}" >/dev/null 2>&1; then
+        echo "KD_AGENT command not found: ${agent%% *}" >&2
+        exit 1
+    fi
+
     ensure_tmux_anchor
 
     local session="koha-$KTD_NAME"
@@ -496,14 +504,7 @@ cmd_tmux() {
         "ktd --shell --name $KTD_NAME"
     tmux select-pane -t "$session:container.1"
 
-    # Window 2: dev — agent left, empty term right. KD_AGENT is run through
-    # the shell (so it may carry arguments); check its binary exists up front
-    # rather than letting the window vanish on a typo.
-    local agent="${KD_AGENT:-claude}"
-    if ! command -v "${agent%% *}" >/dev/null 2>&1; then
-        echo "KD_AGENT command not found: ${agent%% *}" >&2
-        exit 1
-    fi
+    # Window 2: dev — agent left, empty term right
     tmux new-window -t "$session" -n "dev" -c "$worktree" "${tmux_env[@]}" "$agent"
     tmux split-window -h -t "$session:dev" -c "$worktree"
     tmux select-pane -t "$session:dev.1"
