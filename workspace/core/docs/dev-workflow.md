@@ -12,7 +12,7 @@ kd up   <feature> [--bz] [--tmux]  # create worktree from main + boot KTD instan
                                    #   --tmux opens the dev tmux session once KTD is ready
 kd wt   <feature> [--bz]           # create worktree only (no KTD)
 kd tmux <feature>                  # attach/create the dev tmux session (agent | shell | logs)
-kd down <feature> [--rm]           # tear down KTD instance (--rm also removes the worktree)
+kd down <feature> [--keep|--rm=full] # tear down KTD + remove the worktree (--keep keeps it; --rm=full also deletes the branch)
 kd list                            # worktrees + KTD container status
 kd branches                        # branches, worktrees, containers, upstream tracking
 ```

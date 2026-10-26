@@ -5,27 +5,60 @@ Personal Koha development workflow scripts. A single `kd` command wraps git work
 ## Usage
 
 ```
-kd up <name> [--plugin PATH] [--plugins] [--search-engine ENGINE]
-             [--selenium] [--smtp] [--sso] [--persistent-db]
-kd down <name> [--rm]
+kd up   <name> [--plugin PATH] [--plugins] [--search-engine ENGINE]
+               [--selenium] [--smtp] [--sso] [--persistent-db]
+               [--bz] [--tmux] [--track UPSTREAM]
+kd wt   <name> [--bz] [--track UPSTREAM]
+kd down <name> [--keep] [--rm=full]
 kd tmux <name>
 kd shell <name> [--root] [--run 'cmd']
 kd logs <name>
-kd list
+kd list [--refresh]
 kd proxy [start|stop|status]
 ```
 
 | Command | Purpose |
 |---------|---------|
-| `kd up` | Create worktree (if needed) and start a KTD instance |
-| `kd down` | Stop a KTD instance; `--rm` also removes the worktree |
-| `kd tmux` | Attach or create a tmux dev session (container + dev windows) |
-| `kd shell` | Drop into the KTD container shell |
+| `kd up` | Create worktree (if needed) and start a KTD instance. `--bz` applies the bug's patches (`git bz apply`, bug number taken from a `bug_NNNNN` name) before booting; `--tmux` waits for KTD to be ready then opens the tmux session; `--track UPSTREAM` creates a new branch tracking an upstream ref (e.g. `origin/master`) instead of branching from `main`. The remaining flags are passed through to `ktd` |
+| `kd wt` | Create the worktree only (no KTD). Takes `--bz` and `--track` like `kd up` |
+| `kd down` | Stop the KTD instance **and remove its worktree** (the branch is kept). `--keep` leaves the worktree in place; `--rm=full` also deletes the branch. (`--rm` is accepted for compatibility; it is now the default) |
+| `kd tmux` | Attach or create the `koha-<name>` tmux session: a `container` window (docker logs + KTD shell) and a `dev` window running your agent CLI in the worktree. See [tmux sessions](#tmux-sessions) |
+| `kd shell` | Drop into the KTD container shell (`--root` for root, `--run 'cmd'` to run one command) |
 | `kd logs` | Follow the KTD container logs |
-| `kd list` | Searchable/sortable table of branches with KTD status. In fzf: `enter` opens an action menu (up, tmux, shell, logs, down, ...), `tab` multi-selects for bulk up/down, `ctrl-t`/`ctrl-u`/`ctrl-d` = tmux / up+tmux / down |
-| `kd proxy` | Manage the shared Traefik proxy |
+| `kd list` | Table of local branches with Bugzilla title/status, last-worked date, and worktree/container status (alias: `kd branches`). See [kd list](#kd-list) |
+| `kd proxy` | Manage the shared Traefik proxy (started automatically by `kd up` if it isn't running) |
 
 Versioned branch names (`NN.NN.TAG`, e.g. `24.11.etf`) are automatically mapped to a Docker-safe project name (`etf24`) and the correct `KOHA_IMAGE`.
+
+Every worktree that `kd up` / `kd wt` creates is also made usable and tidy:
+
+- **Bare-repo fix.** KTD enables `extensions.worktreeConfig` on the shared bare clone, which makes every worktree inherit `core.bare=true` and breaks `git status`/`git am`/`git commit`. `kd` sets a per-worktree `core.bare=false` override.
+- **Shared Claude memory.** If a root memory store exists under `~/.claude/projects/`, each worktree's memory directory is symlinked to it so accumulated Koha knowledge follows every session (existing real memory dirs are never replaced). Honours `CLAUDE_CONFIG_DIR`.
+
+### tmux sessions
+
+`kd tmux <name>` builds the session `koha-<name>` (re-running it just re-attaches, or switches client when already inside tmux):
+
+- **`container`** window: docker logs on the left, `ktd --shell` on the right.
+- **`dev`** window: `$KD_AGENT` (default `claude`) on the left, an empty terminal on the right, all with the worktree as cwd.
+
+Every pane gets `KTD_INSTANCE`, `SYNC_REPO`, `KTD_HOME` and `KOHA_DIR`, so tests, builds and git target the right instance and branch. `KD_AGENT` may include arguments (`KD_AGENT="opencode --foo"`); its binary is checked before the session is created. `kd` also keeps a detached `_anchor` tmux session rooted at `$HOME` so that removing a worktree can never leave the tmux server with a stale working directory.
+
+If your shell rc exports `SYNC_REPO`, only *default* it (`export SYNC_REPO=${SYNC_REPO:-…}`) or it will overwrite the per-worktree value in the terminal pane.
+
+### kd list
+
+Bugzilla title and status come from `bugs.koha-community.org`, cached in `${XDG_CACHE_HOME:-~/.cache}/kd/bugzilla.json`; `--refresh` forces a fresh lookup (an unreachable server falls back to the cache). With [fzf](https://github.com/junegunn/fzf) and a terminal it opens interactively, otherwise it prints through `$PAGER`.
+
+| Key | Action |
+|-----|--------|
+| `enter` | Action menu for the row (up, tmux, shell, logs, down, ...) |
+| `tab` | Multi-select rows for bulk up / down |
+| `ctrl-t` / `ctrl-u` / `ctrl-d` | tmux / up + tmux / down |
+| `alt-t` / `alt-b` / `alt-l` / `alt-c` | Sort by title / Bugzilla status / last worked / container |
+| `alt-r` | Reset to branch order |
+
+The list refreshes after each action. Rows are colour-coded by Bugzilla status.
 
 ## Workspace docs (`workspace/`)
 
@@ -75,8 +108,11 @@ git pull
 ## Dependencies
 
 - `ktd` / `ktd_proxy` — [koha-testing-docker](https://gitlab.com/koha-community/koha-testing-docker)
-- `docker`
+- `docker`, `git`
 - `tmux`
+- `curl` and `jq` (Bugzilla lookups in `kd list`)
+- `fzf` (optional — interactive `kd list`; falls back to `$PAGER` without it)
+- `git-bz` (only for `--bz`)
 - An agent CLI for the dev window in `kd tmux` (default `claude`; set `KD_AGENT` to use another, e.g. `opencode`)
 
 ## Environment
@@ -85,4 +121,7 @@ git pull
 |----------|---------|---------|
 | `KOHA_DIR` | `~/Projects/koha` | Root of the Koha workspace |
 | `KTD_HOME` | `$KOHA_DIR/tooling/koha-testing-docker` | KTD checkout location |
-| `KD_AGENT` | `claude` | Agent CLI launched in `kd tmux`'s dev window |
+| `KD_AGENT` | `claude` | Agent CLI (optionally with arguments) launched in `kd tmux`'s dev window |
+| `XDG_CACHE_HOME` | `~/.cache` | Location of the `kd/bugzilla.json` cache |
+| `PAGER` | `less -FRSX` | Pager for `kd list` when fzf isn't used |
+| `CLAUDE_CONFIG_DIR` | `~/.claude` | Where shared Claude memory is linked |
