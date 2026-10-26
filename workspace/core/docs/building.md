@@ -46,3 +46,8 @@ npx eslint .               # JavaScript/TypeScript/Vue linting
 npx prettier --write .     # Code formatting
 npx stylelint "**/*.scss"  # CSS/SCSS linting
 ```
+
+Prettier is configured in `.prettierrc.js`: 4-space indent, `trailingComma: "es5"`,
+`arrowParens: "avoid"`. Template Toolkit files (`*.tt`, `*.inc`) use the
+`@koha-community/prettier-plugin-template-toolkit` parser with `printWidth: 240`
+and `htmlWhitespaceSensitivity: "strict"`.

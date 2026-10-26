@@ -48,3 +48,18 @@ For single-instance setups (no parallel work), omit `--name` or use `KTD_INSTANC
 3. Build assets: `ktd --name "${KTD_INSTANCE:-kohadev}" --shell --run 'yarn build'`
 4. Submit patches to [bugs.koha-community.org](https://bugs.koha-community.org) (not GitHub PRs)
 5. Follow the [SubmittingAPatch wiki](https://wiki.koha-community.org/wiki/SubmittingAPatch) guidelines
+
+### Commit messages
+
+Follow the [Commit messages wiki](https://wiki.koha-community.org/wiki/Commit_messages):
+
+```
+Bug XXXXX: Short description
+
+[optional summary of the feature/bugfix]
+
+To test:
+1. [optional user-focused test plan]
+
+[optional sponsorship trailer, e.g. Sponsored-by: <name>]
+```
